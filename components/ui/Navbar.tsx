@@ -1,23 +1,22 @@
-"use client";
+"use client"
 
-import Link from "next/link";
+import Link from "next/link"
 
 export default function Navbar() {
-  return (
-    <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-10 py-6">
 
-      <Link href="/" className="text-xl font-bold">
-        Aico
-      </Link>
+return (
 
-      <div className="flex gap-8 text-sm">
+<nav className="md:hidden fixed top-0 left-0 w-full z-50 flex justify-center py-5 backdrop-blur-md bg-black/40 border-b border-zinc-900">
 
-        <Link href="#work">Work</Link>
-        <Link href="#services">Services</Link>
-        <Link href="#contact">Contact</Link>
+<Link
+href="/"
+className="text-lg font-semibold tracking-widest text-white"
+>
+AICO
+</Link>
 
-      </div>
+</nav>
 
-    </nav>
-  );
+)
+
 }
