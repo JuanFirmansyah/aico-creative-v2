@@ -30,6 +30,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "components/FloatingMenu2.ms"  ],
   "exclude": ["node_modules"]
 }

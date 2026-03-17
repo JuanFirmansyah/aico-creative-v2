@@ -62,7 +62,7 @@ export default function FloatingMenu({ navMenu, socialMenu }: FloatingMenuProps)
   }, [])
 
   /* ------------------------------- */
-  /* Detect Side (Stable) */
+  /* Detect Side (SAFE) */
   /* ------------------------------- */
 
   const detectSide = useCallback(() => {
@@ -73,9 +73,9 @@ export default function FloatingMenu({ navMenu, socialMenu }: FloatingMenuProps)
     const center = rect.left + rect.width / 2
 
     const newSide: Side =
-      center < vw * 0.4
+      center < vw * 0.35
         ? "left"
-        : center > vw * 0.6
+        : center > vw * 0.65
         ? "right"
         : "center"
 
@@ -138,13 +138,9 @@ export default function FloatingMenu({ navMenu, socialMenu }: FloatingMenuProps)
       }
     })
 
-    draggableInstance.current = draggableArray[0] ?? null
+    draggableInstance.current = draggableArray[0]
 
-    // 🔥 FIX INITIAL GLITCH
-    requestAnimationFrame(() => {
-      updateMenuPosition()
-      detectSide()
-    })
+    updateMenuPosition()
 
     return () => {
       draggableInstance.current?.kill()
@@ -164,26 +160,26 @@ export default function FloatingMenu({ navMenu, socialMenu }: FloatingMenuProps)
     if (open) {
       gsap.fromTo(
         items,
-        { scale: 0.6, opacity: 0 },
+        { scale: 0, opacity: 0 },
         {
           scale: 1,
           opacity: 1,
-          stagger: 0.04,
+          stagger: 0.05,
           duration: 0.35,
-          ease: "back.out(1.6)"
+          ease: "back.out(1.7)"
         }
       )
 
       gsap.to(menuRef.current, {
         scale: 1,
         opacity: 1,
-        duration: 0.2
+        duration: 0.25
       })
     } else {
       gsap.to(menuRef.current, {
         scale: 0,
         opacity: 0,
-        duration: 0.2
+        duration: 0.25
       })
     }
   }, [open])
@@ -198,30 +194,24 @@ export default function FloatingMenu({ navMenu, socialMenu }: FloatingMenuProps)
   }
 
   /* ------------------------------- */
-  /* Smart Angle (FIXED) */
+  /* Smart Radial Angle */
   /* ------------------------------- */
 
-const getAngle = (index: number, total: number): number => {
+  const getAngle = (index: number, total: number) => {
+    if (side === "left") {
+      const start = -Math.PI / 2
+      const end = Math.PI / 2
+      return start + (index / (total - 1)) * (end - start)
+    }
 
-  if (total === 1) return 0
+    if (side === "right") {
+      const start = Math.PI / 2
+      const end = (Math.PI * 3) / 2
+      return start + (index / (total - 1)) * (end - start)
+    }
 
-  const spread = Math.PI * 0.9 // lebih lebar & natural
-
-  // 🔥 LEFT → buka ke kanan
-  if (side === "left") {
-    const start = -spread / 2
-    return start + (index / (total - 1)) * spread
+    return (index / total) * Math.PI * 2
   }
-
-  // 🔥 RIGHT → buka ke kiri (FIX BUG)
-  if (side === "right") {
-    const start = Math.PI + spread / 2
-    return start - (index / (total - 1)) * spread
-  }
-
-  // 🔥 CENTER → perfect circle
-  return (index / total) * Math.PI * 2
-}
 
   const items = [...navMenu, ...socialMenu]
 
@@ -272,15 +262,11 @@ const getAngle = (index: number, total: number): number => {
 
         {items.map((item, i) => {
 
-          const baseRadius = 85
-          const dynamicRadius = Math.min(
-            baseRadius + items.length * 6,
-            140 // max biar tidak keluar layar
-          )
+          const radius = 110
           const angle = getAngle(i, items.length)
 
-          const x = Math.cos(angle) * dynamicRadius
-          const y = Math.sin(angle) * dynamicRadius
+          const x = Math.cos(angle) * radius
+          const y = Math.sin(angle) * radius
 
           const Icon = item.icon
 
@@ -291,7 +277,7 @@ const getAngle = (index: number, total: number): number => {
               style={{
                 transform: `translate(${x}px,${y}px)`
               }}
-              className="absolute w-12 h-12 bg-zinc-900/90 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-zinc-700 transition-all duration-200 hover:scale-110 shadow-xl pointer-events-auto"
+              className="absolute w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center text-white hover:bg-zinc-700 transition-all duration-200 hover:scale-110 shadow-lg pointer-events-auto"
             >
               <Icon size={20} />
             </a>

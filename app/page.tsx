@@ -6,7 +6,7 @@ import Lenis from "@studio-freight/lenis"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import FloatingMenu from "../components/FloatingMenu"
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 import { Folder, User, Film, Mail, Instagram, Linkedin, Dribbble } from "lucide-react"
 
 gsap.registerPlugin(ScrollTrigger)
