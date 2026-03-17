@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect, useState, useCallback } from "react"
+import { useRef, useEffect, useState, useCallback, useMemo, useLayoutEffect } from "react"
 import gsap from "gsap"
 import { Draggable } from "gsap/Draggable"
 import { Menu, X } from "lucide-react"
@@ -35,82 +35,140 @@ type Side = "left" | "right" | "center"
 /* ------------------------------- */
 
 export default function FloatingMenu({ navMenu, socialMenu }: FloatingMenuProps) {
-
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const orbRef = useRef<HTMLDivElement | null>(null)
-  const menuRef = useRef<HTMLDivElement | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const orbRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const draggableInstance = useRef<Draggable | null>(null)
   const dragMoved = useRef(false)
 
   const [open, setOpen] = useState(false)
+  // ✅ State diinisialisasi dengan nilai default, TANPA membaca ref
   const [side, setSide] = useState<Side>("center")
+  const [orbRect, setOrbRect] = useState<DOMRect | null>(null)
+
+  // Gabungkan semua item menu
+  const items = useMemo(() => [...navMenu, ...socialMenu], [navMenu, socialMenu])
 
   /* ------------------------------- */
-  /* Update Menu Position */
+  /* Update orbRect dari ref (hanya di event/effect, bukan render) */
   /* ------------------------------- */
+  const updateOrbRect = useCallback(() => {
+    if (orbRef.current) {
+      setOrbRect(orbRef.current.getBoundingClientRect())
+    }
+  }, [])
 
+  /* ------------------------------- */
+  /* Posisikan menu tepat di tengah orb */
+  /* ------------------------------- */
   const updateMenuPosition = useCallback(() => {
     if (!orbRef.current || !menuRef.current) return
-
     const rect = orbRef.current.getBoundingClientRect()
-
     gsap.set(menuRef.current, {
       left: rect.left + rect.width / 2,
-      top: rect.top + rect.height / 2
+      top: rect.top + rect.height / 2,
     })
   }, [])
 
   /* ------------------------------- */
-  /* Detect Side (Stable) */
+  /* Deteksi sisi orb (kiri/tengah/kanan) berdasarkan posisi terkini */
   /* ------------------------------- */
-
   const detectSide = useCallback(() => {
     if (!orbRef.current) return
-
     const rect = orbRef.current.getBoundingClientRect()
+    const centerX = rect.left + rect.width / 2
     const vw = window.innerWidth
-    const center = rect.left + rect.width / 2
 
-    const newSide: Side =
-      center < vw * 0.4
-        ? "left"
-        : center > vw * 0.6
-        ? "right"
-        : "center"
+    let newSide: Side = "center"
+    if (centerX < vw * 0.4) newSide = "left"
+    else if (centerX > vw * 0.6) newSide = "right"
 
-    setSide(prev => (prev !== newSide ? newSide : prev))
-  }, [])
+    setSide((prev) => {
+      if (prev !== newSide) {
+        // Perbarui rect juga karena posisi berubah
+        updateOrbRect()
+        return newSide
+      }
+      return prev
+    })
+  }, [updateOrbRect])
 
   /* ------------------------------- */
-  /* Snap to Edge */
+  /* Hitung sudut item berdasarkan sisi */
   /* ------------------------------- */
+  const getAngle = useCallback(
+    (index: number, total: number): number => {
+      if (total === 1) return side === "left" ? 0 : side === "right" ? Math.PI : 0
 
-  const snapToEdge = useCallback(() => {
-    if (!orbRef.current || !draggableInstance.current) return
+      const spread = Math.PI * 0.9 // 162°
 
-    const rect = orbRef.current.getBoundingClientRect()
-    const drag = draggableInstance.current
+      if (side === "left") {
+        // Buka ke kanan: sudut antara -spread/2 hingga spread/2
+        const start = -spread / 2
+        return start + (index / (total - 1)) * spread
+      } else if (side === "right") {
+        // Buka ke kiri: sudut antara PI - spread/2 hingga PI + spread/2
+        const start = Math.PI - spread / 2
+        return start + (index / (total - 1)) * spread
+      } else {
+        // Tengah: lingkaran penuh
+        return (index / total) * Math.PI * 2
+      }
+    },
+    [side]
+  )
 
+  /* ------------------------------- */
+  /* Hitung radius aman berdasarkan orbRect dan side */
+  /* ------------------------------- */
+  const safeRadius = useMemo((): number => {
+    // Jika orbRect belum tersedia, gunakan nilai aman sementara (60)
+    if (!orbRect) return 60
+
+    const centerX = orbRect.left + orbRect.width / 2
+    const centerY = orbRect.top + orbRect.height / 2
     const vw = window.innerWidth
     const vh = window.innerHeight
+    const itemHalfSize = 24 // w-12 = 48px, setengahnya 24
+    const maxRadius = 140
 
-    const snapX = rect.left < vw / 2 ? 16 : vw - 80
-    const snapY = Math.min(Math.max(rect.top, 16), vh - 80)
+    if (side === "left") {
+      // Item hanya di kanan orb → batasi oleh jarak ke tepi kanan
+      const distanceToRight = vw - centerX - itemHalfSize
+      return Math.min(maxRadius, Math.max(60, distanceToRight))
+    } else if (side === "right") {
+      // Item hanya di kiri orb → batasi oleh jarak ke tepi kiri
+      const distanceToLeft = centerX - itemHalfSize
+      return Math.min(maxRadius, Math.max(60, distanceToLeft))
+    } else {
+      // Item ke segala arah → batasi oleh jarak terpendek ke semua tepi
+      const distances = [
+        centerX - itemHalfSize,
+        vw - centerX - itemHalfSize,
+        centerY - itemHalfSize,
+        vh - centerY - itemHalfSize,
+      ]
+      const minDistance = Math.min(...distances)
+      return Math.min(maxRadius, Math.max(60, minDistance))
+    }
+  }, [orbRect, side])
 
-    gsap.to(orbRef.current, {
-      x: snapX - rect.left + drag.x,
-      y: snapY - rect.top + drag.y,
-      duration: 0.35,
-      ease: "power3.out",
-      onUpdate: updateMenuPosition
+  /* ------------------------------- */
+  /* Hitung posisi tiap item berdasarkan safeRadius dan angle */
+  /* ------------------------------- */
+  const itemPositions = useMemo(() => {
+    return items.map((_, i) => {
+      const angle = getAngle(i, items.length)
+      const x = Math.cos(angle) * safeRadius
+      const y = Math.sin(angle) * safeRadius
+      return { x, y }
     })
-  }, [updateMenuPosition])
+  }, [items, safeRadius, getAngle])
 
   /* ------------------------------- */
-  /* Drag System */
+  /* Setup Draggable (tanpa snap paksa) */
   /* ------------------------------- */
-
   useEffect(() => {
     if (!containerRef.current || !orbRef.current) return
 
@@ -120,42 +178,64 @@ export default function FloatingMenu({ navMenu, socialMenu }: FloatingMenuProps)
       type: "x,y",
       bounds: containerRef.current,
       edgeResistance: 0.85,
-
       onPress() {
         dragMoved.current = false
       },
-
       onDrag() {
         dragMoved.current = true
         updateMenuPosition()
-        detectSide()
+        detectSide() // update side saat drag
       },
-
       onRelease() {
         updateMenuPosition()
-        detectSide()
-        snapToEdge()
-      }
+        detectSide() // pastikan side terbaru setelah berhenti
+        updateOrbRect() // perbarui rect untuk perhitungan radius
+      },
     })
 
     draggableInstance.current = draggableArray[0] ?? null
 
-    // 🔥 FIX INITIAL GLITCH
-    requestAnimationFrame(() => {
-      updateMenuPosition()
-      detectSide()
-    })
-
+    // Bersihkan instance saat unmount
     return () => {
       draggableInstance.current?.kill()
       draggableInstance.current = null
     }
-  }, [detectSide, snapToEdge, updateMenuPosition])
+  }, [detectSide, updateMenuPosition, updateOrbRect])
 
   /* ------------------------------- */
-  /* Menu Animation */
+  /* Inisialisasi pertama: baca posisi dan side (DI LAYOUT EFFECT, BUKAN RENDER) */
   /* ------------------------------- */
+  useLayoutEffect(() => {
+    // ✅ Inilah tempat yang AMAN untuk membaca ref dan mengupdate state
+    if (orbRef.current) {
+      // Set initial orbRect
+      setOrbRect(orbRef.current.getBoundingClientRect())
+      // Set initial side
+      const rect = orbRef.current.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const vw = window.innerWidth
+      let initialSide: Side = "center"
+      if (centerX < vw * 0.4) initialSide = "left"
+      else if (centerX > vw * 0.6) initialSide = "right"
+      setSide(initialSide)
+      
+      // Posisikan menu
+      updateMenuPosition()
+    }
 
+    // Handler resize
+    const handleResize = () => {
+      updateOrbRect()
+      detectSide()
+      updateMenuPosition()
+    }
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [detectSide, updateMenuPosition, updateOrbRect]) // Kosong karena hanya sekali di mount
+
+  /* ------------------------------- */
+  /* Animasi buka/tutup menu */
+  /* ------------------------------- */
   useEffect(() => {
     if (!menuRef.current) return
 
@@ -170,135 +250,93 @@ export default function FloatingMenu({ navMenu, socialMenu }: FloatingMenuProps)
           opacity: 1,
           stagger: 0.04,
           duration: 0.35,
-          ease: "back.out(1.6)"
+          ease: "back.out(1.6)",
         }
       )
-
       gsap.to(menuRef.current, {
         scale: 1,
         opacity: 1,
-        duration: 0.2
+        duration: 0.2,
       })
     } else {
       gsap.to(menuRef.current, {
         scale: 0,
         opacity: 0,
-        duration: 0.2
+        duration: 0.2,
       })
     }
   }, [open])
 
   /* ------------------------------- */
-  /* Click Orb */
+  /* Klik orb (buka/tutup, hanya jika tidak drag) */
   /* ------------------------------- */
-
   const handleClick = () => {
     if (dragMoved.current) return
-    setOpen(v => !v)
+    // Pastikan side dan posisi terbaru sebelum membuka
+    detectSide()
+    updateOrbRect()
+    setOpen((v) => !v)
   }
-
-  /* ------------------------------- */
-  /* Smart Angle (FIXED) */
-  /* ------------------------------- */
-
-const getAngle = (index: number, total: number): number => {
-
-  if (total === 1) return 0
-
-  const spread = Math.PI * 0.9 // lebih lebar & natural
-
-  // 🔥 LEFT → buka ke kanan
-  if (side === "left") {
-    const start = -spread / 2
-    return start + (index / (total - 1)) * spread
-  }
-
-  // 🔥 RIGHT → buka ke kiri (FIX BUG)
-  if (side === "right") {
-    const start = Math.PI + spread / 2
-    return start - (index / (total - 1)) * spread
-  }
-
-  // 🔥 CENTER → perfect circle
-  return (index / total) * Math.PI * 2
-}
-
-  const items = [...navMenu, ...socialMenu]
 
   /* ------------------------------- */
   /* Render */
   /* ------------------------------- */
-
   return (
     <div
       ref={containerRef}
-      className="md:hidden fixed inset-0 pointer-events-none z-50"
+      className="fixed inset-0 pointer-events-none z-50 md:hidden"
     >
-
       {/* ORB */}
-
       <div
         ref={orbRef}
         onClick={handleClick}
-        className="pointer-events-auto absolute bottom-10 right-10 w-16 h-16 bg-white text-black rounded-full flex items-center justify-center shadow-2xl cursor-grab active:cursor-grabbing"
+        className="pointer-events-auto absolute bottom-10 right-10 w-16 h-16 bg-linear-to-br from-white to-gray-100 text-gray-900 rounded-full flex items-center justify-center shadow-2xl cursor-grab active:cursor-grabbing backdrop-blur-sm border border-white/20"
       >
         <div className="relative w-6 h-6">
-
           <Menu
             className={`absolute transition-all duration-300 ${
               open ? "opacity-0 rotate-90" : "opacity-100 rotate-0"
             }`}
           />
-
           <X
             className={`absolute transition-all duration-300 ${
               open ? "opacity-100 rotate-0" : "opacity-0 -rotate-90"
             }`}
           />
-
         </div>
       </div>
 
       {/* RADIAL MENU */}
+      {items.length > 0 && (
+        <div
+          ref={menuRef}
+          className="absolute pointer-events-none"
+          style={{
+            transform: "translate(-50%, -50%) scale(0)",
+            opacity: 0,
+          }}
+        >
+          {items.map((item, i) => {
+            const { x, y } = itemPositions[i]
+            const Icon = item.icon
 
-      <div
-        ref={menuRef}
-        className="absolute pointer-events-none"
-        style={{
-          transform: "translate(-50%,-50%) scale(0)",
-          opacity: 0
-        }}
-      >
-
-        {items.map((item, i) => {
-
-          const baseRadius = 85
-          const dynamicRadius = Math.min(
-            baseRadius + items.length * 6,
-            140 // max biar tidak keluar layar
-          )
-          const angle = getAngle(i, items.length)
-
-          const x = Math.cos(angle) * dynamicRadius
-          const y = Math.sin(angle) * dynamicRadius
-
-          const Icon = item.icon
-
-          return (
-            <a
-              key={item.name}
-              href={item.link}
-              style={{
-                transform: `translate(${x}px,${y}px)`
-              }}
-              className="absolute w-12 h-12 bg-zinc-900/90 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-zinc-700 transition-all duration-200 hover:scale-110 shadow-xl pointer-events-auto"
-            >
-              <Icon size={20} />
-            </a>
-          )
-        })}
-
-      </div>
+            return (
+              <a
+                key={item.name}
+                href={item.link}
+                style={{ transform: `translate(${x}px, ${y}px)` }}
+                className="absolute w-12 h-12 bg-zinc-900/80 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-zinc-700 transition-all duration-200 hover:scale-110 shadow-xl pointer-events-auto group"
+              >
+                <Icon size={20} />
+                {/* Tooltip sederhana (opsional) */}
+                <span className="absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  {item.name}
+                </span>
+              </a>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
