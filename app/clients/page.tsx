@@ -32,7 +32,7 @@ const clients = [
   { name: "Wondr by BNI", category: "Digital Banking", logo: "/clients/wondr.png" },
   { name: "LIA", category: "Education", logo: "/clients/lia.png" },
   { name: "Mandiri Utama Finance", category: "Finance", logo: "/clients/mandiri-utama.png" },
-  { name: "Pellindo", category: "Logistics", logo: "/clients/pellindo.png" },
+  { name: "Pelindo", category: "Logistics", logo: "/clients/pelindo.png" },
   { name: "Pertamina", category: "Energy", logo: "/clients/pertamina.png" },
   { name: "Wika Beton", category: "Construction", logo: "/clients/wika-beton.png" },
 ]
