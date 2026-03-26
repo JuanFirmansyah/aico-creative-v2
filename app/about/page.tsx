@@ -1,10 +1,11 @@
 // app/about/page.tsx
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import Lenis from "@studio-freight/lenis"
 import FloatingMenu from "../../components/FloatingMenu"
-import { Folder, User, Film, Mail, Instagram, Linkedin, Dribbble, Eye, Camera, Sparkles, Heart, Users, Award } from "lucide-react"
+import { Folder, User, Film, Mail, Instagram, Linkedin, Dribbble, Eye, Camera, Sparkles, Heart, Users, Award, X } from "lucide-react"
 
 const navMenu = [
   { name: "Projects", link: "/", icon: Folder },
@@ -19,16 +20,62 @@ const socialMenu = [
   { name: "Dribbble", link: "https://dribbble.com/aicocreative", icon: Dribbble },
 ]
 
+// Team gallery photos (6 group photos) - menggunakan path lokal Anda
+const teamGallery = [
+  {
+    id: 1,
+    title: "Creative Brainstorm Session",
+    description: "Mapping out the next big project",
+    image: "/team/gallery-1.jpg",
+    color: "from-blue-500/20 to-purple-500/20"
+  },
+  {
+    id: 2,
+    title: "On Location Shoot",
+    description: "Capturing magic in the field",
+    image: "/team/gallery-2.jpg",
+    color: "from-green-500/20 to-emerald-500/20"
+  },
+  {
+    id: 3,
+    title: "Post Production Lab",
+    description: "Where stories come to life",
+    image: "/team/gallery-3.jpeg",
+    color: "from-orange-500/20 to-red-500/20"
+  },
+  {
+    id: 4,
+    title: "Team Dinner & Celebration",
+    description: "Celebrating milestones together",
+    image: "/team/gallery-4.jpg",
+    color: "from-pink-500/20 to-rose-500/20"
+  },
+  {
+    id: 5,
+    title: "Equipment Check",
+    description: "Preparing for perfection",
+    image: "/team/gallery-5.jpg",
+    color: "from-cyan-500/20 to-teal-500/20"
+  },
+  {
+    id: 6,
+    title: "Creative Retreat",
+    description: "Finding inspiration together",
+    image: "/team/gallery-5.jpg",
+    color: "from-indigo-500/20 to-violet-500/20"
+  },
+]
+
 // Team members with Indonesian names
 const teamMembers = [
   {
-    name: "Alex Chandra",
+    name: "Rizki Ramadhan",
     role: "Creative Director / Cinematographer",
     photo: "/team/team-1.jpg",
     icon: Film
   },
   {
-    name: "Maya Putri",
+    name: "Faizal Farzy",
     role: "Lead Photographer",
     photo: "/team/team-2.jpg",
     icon: Camera
@@ -49,6 +96,8 @@ const teamMembers = [
 
 export default function AboutPage() {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [selectedImage, setSelectedImage] = useState<typeof teamGallery[0] | null>(null)
+  const [hoveredId, setHoveredId] = useState<number | null>(null)
 
   useEffect(() => {
     const lenis = new Lenis({ lerp: 0.08 })
@@ -71,6 +120,80 @@ export default function AboutPage() {
       <div className="p-8 md:p-16">
         <div className="max-w-6xl mx-auto">
           
+          {/* Team Gallery Section */}
+          <div className="mb-24">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900/50 rounded-full border border-zinc-800 mb-4">
+                <Users className="w-4 h-4 text-zinc-400" />
+                <span className="text-sm text-zinc-400">Behind the Scenes</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Meet the <span className="bg-linear-to-r from-white to-zinc-400 bg-clip-text text-transparent">Team</span>
+              </h2>
+              <p className="text-zinc-400 max-w-2xl mx-auto">
+                A glimpse into our creative journey — the moments, the laughter, and the passion that drives us
+              </p>
+            </div>
+
+            {/* Gallery Grid with Real Images */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {teamGallery.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="group relative aspect-4/3 rounded-2xl overflow-hidden cursor-pointer"
+                  onMouseEnter={() => setHoveredId(photo.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  onClick={() => setSelectedImage(photo)}
+                >
+                  {/* Background Image */}
+                  <div className="absolute inset-0">
+                    <Image
+                      src={photo.image}
+                      alt={photo.title}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      onError={(e) => {
+                        // Jika gambar gagal load, tampilkan placeholder
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                    {/* Fallback jika gambar tidak ada */}
+                    <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
+                      <Camera className="w-12 h-12 text-zinc-600" />
+                    </div>
+                  </div>
+                  
+                  {/* Gradient Overlay */}
+                  <div className={`absolute inset-0 bg-linear-to-br ${photo.color} opacity-60 group-hover:opacity-40 transition-opacity duration-500`} />
+                  
+                  {/* Dark Overlay on Hover */}
+                  <div className={`absolute inset-0 bg-black/40 transition-opacity duration-500 ${
+                    hoveredId === photo.id ? 'opacity-70' : 'opacity-0'
+                  }`} />
+                  
+                  {/* Content Overlay */}
+                  <div className={`absolute inset-0 flex flex-col justify-end p-6 transition-all duration-500 ${
+                    hoveredId === photo.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}>
+                    <h3 className="text-white font-semibold text-lg mb-1">{photo.title}</h3>
+                    <p className="text-zinc-200 text-sm">{photo.description}</p>
+                    <div className="mt-3 w-12 h-px bg-white/50" />
+                  </div>
+                  
+                  {/* Always Visible Title (when not hovered) */}
+                  <div className={`absolute bottom-4 left-4 right-4 transition-all duration-500 ${
+                    hoveredId === photo.id ? 'opacity-0' : 'opacity-100'
+                  }`}>
+                    <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1.5 inline-block">
+                      <p className="text-white text-xs font-medium">{photo.title}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Hero Section */}
           <div className="text-center mb-16">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-linear-to-r from-white to-zinc-400 bg-clip-text text-transparent">
@@ -112,7 +235,7 @@ export default function AboutPage() {
 
           {/* Team Section */}
           <div className="mb-20">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center text-white">
               The Creative Team
             </h2>
             <p className="text-zinc-400 text-center mb-12 max-w-2xl mx-auto">
@@ -179,6 +302,44 @@ export default function AboutPage() {
           </div>
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="absolute -top-12 right-0 text-white hover:text-zinc-300 transition-colors z-10"
+              onClick={() => setSelectedImage(null)}
+            >
+              <X className="w-8 h-8" />
+            </button>
+            <div className="bg-zinc-900 rounded-2xl overflow-hidden">
+              <div className="relative aspect-video">
+                <Image
+                  src={selectedImage.image}
+                  alt={selectedImage.title}
+                  fill
+                  className="object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
+                  <Camera className="w-16 h-16 text-zinc-600" />
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-2xl font-bold text-white mb-2">{selectedImage.title}</h3>
+                <p className="text-zinc-400">{selectedImage.description}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
