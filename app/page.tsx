@@ -1,4 +1,4 @@
-// app\page.tsx
+// app/page.tsx
 "use client"
 
 import { useEffect, useRef } from "react"
@@ -6,7 +6,6 @@ import Lenis from "@studio-freight/lenis"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import FloatingMenu from "../components/FloatingMenu"
-
 import { Folder, User, Film, Mail, Instagram, Linkedin, Dribbble } from "lucide-react"
 
 gsap.registerPlugin(ScrollTrigger)
@@ -36,9 +35,9 @@ const projects: Project[] = [
 
 const navMenu = [
   { name: "Projects", link: "#project-1", icon: Folder },
-  { name: "About", link: "#about", icon: User },
-  { name: "Reel", link: "#reel", icon: Film },
-  { name: "Contact", link: "#contact", icon: Mail },
+  { name: "About", link: "/about", icon: User },
+  { name: "Who We Worked With", link: "/clients", icon: Film },
+  { name: "Contact", link: "/contact", icon: Mail },
 ]
 
 const socialMenu = [
@@ -47,7 +46,7 @@ const socialMenu = [
   { name: "Dribbble", link: "https://dribbble.com", icon: Dribbble },
 ]
 
-export default function Page() {
+export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -74,35 +73,10 @@ export default function Page() {
   }, [])
 
   return (
-    <main ref={containerRef} className="bg-black text-white min-h-screen flex">
-      <aside className="hidden md:flex w-72 flex-col justify-between p-10 border-r border-zinc-900 fixed h-screen">
-        <div>
-          <h1 className="text-xl font-semibold mb-12">AICO Creative</h1>
-          <nav className="flex flex-col space-y-3 text-sm text-zinc-300">
-            <a href="#projects" className="hover:text-white transition-colors">projects</a>
-            <a href="#about" className="hover:text-white transition-colors">about</a>
-            <a href="#reel" className="hover:text-white transition-colors">reel</a>
-            <a href="#contact" className="hover:text-white transition-colors">contact</a>
-          </nav>
-          <div className="mt-10">
-            <p className="text-xs text-zinc-500 mb-4">PROJECTS</p>
-            <ul className="space-y-2 text-sm text-zinc-400">
-              {projects.map((p) => (
-                <li key={p.id}>
-                  <a href={`#${p.id}`} className="hover:text-white transition-colors">
-                    {p.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="text-xs text-zinc-600">© 2026 AICO</div>
-      </aside>
-
+    <div ref={containerRef} className="bg-black"> {/* TAMBAHKAN bg-black DI SINI */}
       <FloatingMenu navMenu={navMenu} socialMenu={socialMenu} />
-
-      <div className="flex-1 md:ml-64 p-8 md:p-16">
+      
+      <div className="p-8 md:p-16">
         <div className="grid md:grid-cols-2 gap-12">
           {projects.map((p) => (
             <div key={p.id} id={p.id} className="reveal aspect-video rounded-xl overflow-hidden bg-zinc-900">
@@ -116,6 +90,6 @@ export default function Page() {
           ))}
         </div>
       </div>
-    </main>
+    </div>
   )
 }
