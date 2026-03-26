@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react"
 import Lenis from "@studio-freight/lenis"
 import FloatingMenu from "../../components/FloatingMenu"
-import { Folder, User, Film, Mail, Instagram, Linkedin, Dribbble, Send, Sparkles, MapPin, Phone } from "lucide-react"
+import { Folder, User, Film, Mail, Instagram, Linkedin, Dribbble, Send, Sparkles, MapPin, Phone, Youtube } from "lucide-react"
 
 const navMenu = [
   { name: "Projects", link: "/", icon: Folder },
@@ -22,13 +22,13 @@ const socialMenu = [
 // Social media links untuk contact page
 const socialLinks = [
   { name: "Instagram", username: "@aicocreative", link: "https://instagram.com/aicocreative", icon: Instagram, color: "hover:text-pink-500" },
+  { name: "YouTube", username: "AICO Creative", link: "https://www.youtube.com/@aicocreativetv", icon: Youtube, color: "hover:text-red-500" },
   { name: "Dribbble", username: "aicocreative", link: "https://dribbble.com/aicocreative", icon: Dribbble, color: "hover:text-pink-400" },
   { name: "Email", username: "hello@aicocreative.com", link: "mailto:hello@aicocreative.com", icon: Mail, color: "hover:text-blue-400" },
 ]
 
 export default function ContactPage() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [isSubmitted, setIsSubmitted] = useState(false)
   const [formData, setFormData] = useState({ name: "", email: "", message: "" })
 
   useEffect(() => {
@@ -47,10 +47,15 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission here
-    console.log("Form submitted:", formData)
-    setIsSubmitted(true)
-    setTimeout(() => setIsSubmitted(false), 3000)
+    
+    // Buat pesan WhatsApp dari form
+    const message = `Halo AICO Creative,%0A%0A*Nama:* ${formData.name}%0A*Email:* ${formData.email}%0A*Pesan:*%0A${formData.message}%0A%0A--%0ADikirim dari website AICO Creative`
+    
+    // Redirect ke WhatsApp dengan pesan yang sudah diformat
+    window.open(`https://wa.me/6285256092725?text=${message}`, '_blank')
+    
+    // Reset form setelah submit
+    setFormData({ name: "", email: "", message: "" })
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -135,18 +140,18 @@ export default function ContactPage() {
                   
                   <button
                     type="submit"
-                    className="group relative w-full px-6 py-3 bg-white text-black font-medium rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                    className="group relative w-full px-6 py-3 bg-green-600 text-white font-medium rounded-lg overflow-hidden transition-all duration-300 hover:bg-green-700 hover:scale-[1.02] active:scale-[0.98]"
                   >
                     <span className="relative z-10 flex items-center justify-center gap-2">
-                      {isSubmitted ? (
-                        <>Message sent! <Sparkles className="w-4 h-4" /></>
-                      ) : (
-                        <>Send Message <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
-                      )}
+                      <Send className="w-4 h-4" />
+                      Send via WhatsApp
                     </span>
-                    <div className="absolute inset-0 bg-linear-to-r from-zinc-200 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-linear-to-r from-green-500 to-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </button>
                 </form>
+                <p className="text-xs text-zinc-500 text-center mt-4">
+                  Your message will be sent directly to our WhatsApp
+                </p>
               </div>
             </div>
 
@@ -174,9 +179,9 @@ export default function ContactPage() {
                         <Phone className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors" />
                       </div>
                       <div>
-                        <p className="text-sm text-zinc-500">Phone</p>
-                        <a href="tel:+6281234567890" className="text-white hover:text-zinc-300 transition-colors">
-                          +62 812 3456 7890
+                        <p className="text-sm text-zinc-500">WhatsApp</p>
+                        <a href="https://wa.me/6285256092725?text=Halo%20AICO%20Creative%2C%20saya%20tertarik%20untuk%20berkolaborasi" target="_blank" rel="noopener noreferrer" className="text-white hover:text-zinc-300 transition-colors">
+                          +62 852-5609-2725
                         </a>
                       </div>
                     </div>

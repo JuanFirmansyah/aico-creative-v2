@@ -2,11 +2,12 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import Link from "next/link"
 import Lenis from "@studio-freight/lenis"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import FloatingMenu from "../components/FloatingMenu"
-import { Folder, User, Film, Mail, Instagram, Linkedin, Dribbble } from "lucide-react"
+import { Folder, User, Film, Mail, Instagram, Linkedin, Dribbble, ArrowRight } from "lucide-react"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -41,9 +42,9 @@ const navMenu = [
 ]
 
 const socialMenu = [
-  { name: "Instagram", link: "https://instagram.com", icon: Instagram },
-  { name: "LinkedIn", link: "https://linkedin.com", icon: Linkedin },
-  { name: "Dribbble", link: "https://dribbble.com", icon: Dribbble },
+  { name: "Instagram", link: "https://instagram.com/aicocreative", icon: Instagram },
+  { name: "LinkedIn", link: "https://linkedin.com/company/aicocreative", icon: Linkedin },
+  { name: "Dribbble", link: "https://dribbble.com/aicocreative", icon: Dribbble },
 ]
 
 export default function HomePage() {
@@ -73,18 +74,32 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div ref={containerRef} className="bg-black"> {/* TAMBAHKAN bg-black DI SINI */}
+    <div ref={containerRef} className="bg-black">
       <FloatingMenu navMenu={navMenu} socialMenu={socialMenu} />
       
       <div className="p-8 md:p-16">
         <div className="grid md:grid-cols-2 gap-12">
           {projects.map((p) => (
-            <div key={p.id} id={p.id} className="reveal aspect-video rounded-xl overflow-hidden bg-zinc-900">
-              <iframe src={p.video} className="w-full h-full" allow="autoplay" title={p.name} />
-              <div className="p-4 text-sm text-zinc-300">
-                <a href={p.detail} className="hover:text-white transition-colors">
-                  {p.name}
-                </a>
+            <div key={p.id} id={p.id} className="reveal rounded-xl overflow-hidden bg-zinc-900 group">
+              <div className="aspect-video relative">
+                <iframe 
+                  src={p.video} 
+                  className="w-full h-full pointer-events-none" 
+                  allow="autoplay" 
+                  title={p.name}
+                />
+              </div>
+              <div className="p-4">
+                <Link 
+                  href={p.detail} 
+                  className="flex items-center justify-between text-zinc-300 hover:text-white transition-colors group/link"
+                >
+                  <span className="font-medium">{p.name}</span>
+                  <span className="flex items-center gap-1 text-sm text-zinc-500 group-hover/link:text-white transition-colors">
+                    View Details
+                    <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+                  </span>
+                </Link>
               </div>
             </div>
           ))}
